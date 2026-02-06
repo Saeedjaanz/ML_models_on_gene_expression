@@ -1,0 +1,9 @@
+"Gene","LASSO","RandomForest","SVM_RFE","N_Models"
+"CASP3",1,1,1,3
+"MMP9",1,1,1,3
+"SRC",1,1,1,3
+"BCL2",1,1,0,2
+"EGFR",1,1,0,2
+"HSP90AA1",1,1,0,2
+"CTNNB1",0,1,0,1
+"ESR1",0,1,0,1

@@ -1,0 +1,5 @@
+"Prediction","Reference","Count","Percentage"
+"Normal","Normal",69,89.6103896103896
+"Cancer","Normal",8,10.3896103896104
+"Normal","Cancer",9,10.3448275862069
+"Cancer","Cancer",78,89.6551724137931
