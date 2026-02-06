@@ -46,6 +46,6 @@ Gene expression data files are not included in this repository due to:
 - Data privacy/sharing agreements
 
 **To obtain data:**
-1. Contact: [Your email]
+1. Contact: [Saeedjaan.smd.fsd@gmail.com]
 2. Or download from GEO: [Link if public]
 3. Or use your own gene expression dataset following the format above
