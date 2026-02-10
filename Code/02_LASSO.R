@@ -1,7 +1,5 @@
 # ============================================================================
-# LASSO LOGISTIC REGRESSION - GOLD STANDARD PROTOCOL
-# Nested Cross-Validation with L1 Regularization
-# Publication-Quality Analysis and Visualization
+# LASSO LOGISTIC REGRESSION
 # ============================================================================
 
 # Required Libraries
@@ -26,8 +24,7 @@ cat("LASSO LOGISTIC REGRESSION - GOLD STANDARD ANALYSIS\n")
 cat(strrep("=", 70) %+% "\n\n")
 
 # Validate input data
-stopifnot(
-  is.matrix(expr_ml),
+stopifnot(is.matrix(expr_ml),
   length(condition) == ncol(expr_ml),
   all(levels(condition) %in% c("Normal", "Cancer"))
 )
@@ -45,7 +42,7 @@ K <- 10                       # Outer CV folds
 consensus_thresh <- 0.7       # Gene must appear in ≥70% folds
 use_lambda <- "lambda.min"    # Options: "lambda.min" or "lambda.1se"
 perform_permutation <- FALSE  # Set TRUE for permutation test (computationally expensive)
-n_perm <- 200                 # Number of permutations
+n_perm <- 200                 # Number of permutations (1000 recommended)
 
 cat(sprintf("\n✓ Configuration:\n"))
 cat(sprintf("  - Outer CV folds: %d\n", K))
@@ -123,14 +120,11 @@ for (i in seq_along(folds)) {
   
   # Fit cv.glmnet (LASSO logistic regression)
   cvfit <- cv.glmnet(
-    x = x_train,
-    y = y_train,
+    x = x_train, y = y_train,
     family = "binomial",
     alpha = 1,              # LASSO (L1 penalty)
     type.measure = "auc",   # Optimize AUC
-    nfolds = inner_nfolds,
-    standardize = TRUE
-  )
+    nfolds = inner_nfolds, standardize = TRUE)
   
   # Select lambda
   chosen_lambda <- if (use_lambda == "lambda.1se") {
@@ -219,18 +213,13 @@ cat(strrep("=", 70) %+% "\n\n")
 
 # Summary dataframe
 summary_df <- data.frame(
-  Fold = seq_len(K),
-  MSE = mse_vals,
-  Accuracy = acc_vals,
-  AUC = auc_vals,
+  Fold = seq_len(K), MSE = mse_vals,
+  Accuracy = acc_vals, AUC = auc_vals,
   Sensitivity = sens_vals,
   Specificity = spec_vals,
-  PPV = ppv_vals,
-  NPV = npv_vals,
-  F1 = f1_vals,
-  Lambda = lambda_vals,
-  N_Features = n_features_vals
-)
+  PPV = ppv_vals, NPV = npv_vals,
+  F1 = f1_vals, Lambda = lambda_vals,
+  N_Features = n_features_vals)
 
 cat("Per-Fold Performance:\n")
 print(summary_df)
@@ -339,14 +328,10 @@ nfolds_full <- min(10, max(3, ncol(expr_ml)))
 
 # Fit cv.glmnet on full dataset
 cv_full <- cv.glmnet(
-  x = full_x,
-  y = full_y,
+  x = full_x, y = full_y,
   family = "binomial",
-  alpha = 1,
-  type.measure = "auc",
-  nfolds = nfolds_full,
-  standardize = TRUE
-)
+  alpha = 1, type.measure = "auc",
+  nfolds = nfolds_full, standardize = TRUE)
 
 cat(sprintf("Full-data lambda.min: %.6f\n", cv_full$lambda.min))
 cat(sprintf("Full-data lambda.1se: %.6f\n", cv_full$lambda.1se))
@@ -384,11 +369,11 @@ fit_glmnet_full <- glmnet(x = full_x, y = full_y, family = "binomial",
                           alpha = 1, standardize = TRUE)
 
 # ============================================================================
-# PART 7: PUBLICATION-QUALITY VISUALIZATIONS
+# PART 7: VISUALIZATIONS
 # ============================================================================
 
 cat("\n" %+% strrep("=", 70) %+% "\n")
-cat("GENERATING PUBLICATION-QUALITY FIGURES\n")
+cat("GENERATING FIGURES\n")
 cat(strrep("=", 70) %+% "\n\n")
 
 # Set publication theme
@@ -417,22 +402,17 @@ roc_df <- data.frame(
 p1 <- ggplot(roc_df, aes(x = FPR, y = TPR)) +
   geom_line(color = "#3498DB", size = 1.3) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50", size = 0.8) +
-  annotate("text", x = 0.6, y = 0.3, 
-           label = sprintf("Pooled AUC = %.3f", pooled_auc),
+  annotate("text", x = 0.6, y = 0.3, label = sprintf("Pooled AUC = %.3f", pooled_auc),
            size = 5, fontface = "bold", color = "#2C3E50") +
-  annotate("text", x = 0.6, y = 0.2,
-           label = sprintf("95%% CI: [%.3f, %.3f]", ci_obj_lasso[1], ci_obj_lasso[3]),
-           size = 4, color = "#7F8C8D") +
-  annotate("text", x = 0.6, y = 0.1,
-           label = sprintf("Mean CV AUC: %.3f ± %.3f", 
-                           mean_metrics["AUC"], sd_metrics["AUC"]),
-           size = 4, color = "#7F8C8D") +
+  annotate("text", x = 0.6, y = 0.2, label = sprintf("95%% CI: [%.3f, %.3f]", ci_obj_lasso[1], 
+           ci_obj_lasso[3]), size = 4, color = "#7F8C8D") +
+  annotate("text", x = 0.6, y = 0.1, label = sprintf("Mean CV AUC: %.3f ± %.3f", 
+           mean_metrics["AUC"], sd_metrics["AUC"]), size = 4, color = "#7F8C8D") +
   labs(
     title = "LASSO ROC Curve",
     subtitle = sprintf("%d-Fold Cross-Validation (Pooled Predictions)", K),
     x = "False Positive Rate (1 - Specificity)",
-    y = "True Positive Rate (Sensitivity)"
-  ) +
+    y = "True Positive Rate (Sensitivity)") +
   coord_equal() +
   theme_publication
 
@@ -443,12 +423,9 @@ p1 <- ggplot(roc_df, aes(x = FPR, y = TPR)) +
 # Extract CV curve data
 cv_data <- data.frame(
   lambda = cv_full$lambda,
-  cvm = cv_full$cvm,
-  cvsd = cv_full$cvsd,
-  cvup = cv_full$cvup,
-  cvlo = cv_full$cvlo,
-  nzero = cv_full$nzero
-)
+  cvm = cv_full$cvm, cvsd = cv_full$cvsd,
+  cvup = cv_full$cvup, cvlo = cv_full$cvlo,
+  nzero = cv_full$nzero)
 
 p2 <- ggplot(cv_data, aes(x = log(lambda), y = cvm)) +
   geom_ribbon(aes(ymin = cvlo, ymax = cvup), alpha = 0.2, fill = "#3498DB") +
@@ -661,21 +638,17 @@ if(length(consensus_genes) > 0) {
   )
   
   p9 <- pheatmap(
-    expr_consensus,
-    scale = "row",
+    expr_consensus, scale = "row",
     clustering_distance_rows = "euclidean",
     clustering_distance_cols = "euclidean",
     clustering_method = "complete",
     annotation_col = annotation_col,
     annotation_colors = ann_colors,
     color = colorRampPalette(c("#3498DB", "white", "#E74C3C"))(100),
-    fontsize = 10,
-    fontsize_row = 9,
-    fontsize_col = 7,
+    fontsize = 10, fontsize_row = 9, fontsize_col = 7,
     border_color = NA,
     main = "Expression Heatmap - Consensus Features",
-    show_colnames = FALSE
-  )
+    show_colnames = FALSE)
 } else {
   p9 <- NULL
 }
@@ -699,20 +672,14 @@ perf_summary_df$Metric <- factor(perf_summary_df$Metric,
 
 p10 <- ggplot(perf_summary_df, aes(x = Metric, y = Mean, fill = Metric)) +
   geom_bar(stat = "identity", color = "black", size = 0.5) +
-  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD), 
-                width = 0.2, size = 0.8) +
-  geom_text(aes(label = sprintf("%.3f", Mean)), 
-            vjust = -0.5, fontface = "bold", size = 4) +
+  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD), width = 0.2, size = 0.8) +
+  geom_text(aes(label = sprintf("%.3f", Mean)),  vjust = -0.5, fontface = "bold", size = 4) +
   scale_fill_brewer(palette = "Set3") +
-  labs(
-    title = "LASSO Performance Summary",
+  labs(title = "LASSO Performance Summary",
     subtitle = sprintf("%d-Fold Cross-Validation Results", K),
-    x = "Performance Metric",
-    y = "Value"
-  ) +
+    x = "Performance Metric", y = "Value") +
   theme_publication +
-  theme(legend.position = "none") +
-  ylim(0, 1.1)
+  theme(legend.position = "none") + ylim(0, 1.1)
 
 # ──────────────────────────────────────────────────────────────────────────
 # Visualization 11: Boxplots for Top 3 Consensus Features
@@ -734,9 +701,7 @@ if(length(consensus_genes) >= 3) {
     labs(
       title = "Expression Levels - Top 3 Consensus Features",
       subtitle = "Statistical significance by t-test",
-      x = "Gene",
-      y = "Log2(RPKM + 1)"
-    ) +
+      x = "Gene", y = "Log2(RPKM + 1)") +
     theme_publication +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"))
 } else {
@@ -747,11 +712,7 @@ if(length(consensus_genes) >= 3) {
 # Visualization 12: Lambda Selection Across Folds
 # ──────────────────────────────────────────────────────────────────────────
 
-lambda_df <- data.frame(
-  Fold = factor(1:K),
-  Lambda = lambda_vals,
-  AUC = auc_vals
-)
+lambda_df <- data.frame(Fold = factor(1:K), Lambda = lambda_vals, AUC = auc_vals)
 
 p12 <- ggplot(lambda_df, aes(x = Fold, y = log(Lambda), fill = AUC)) +
   geom_bar(stat = "identity", color = "black", size = 0.5) +
@@ -762,10 +723,7 @@ p12 <- ggplot(lambda_df, aes(x = Fold, y = log(Lambda), fill = AUC)) +
     title = "Selected Lambda per CV Fold",
     subtitle = sprintf("Mean log(lambda): %.3f ± %.3f", 
                        log(mean(lambda_vals)), log(sd(lambda_vals))),
-    x = "CV Fold",
-    y = "log(Lambda)",
-    fill = "Test AUC"
-  ) +
+    x = "CV Fold", y = "log(Lambda)", fill = "Test AUC") +
   theme_publication
 
 # ============================================================================
@@ -786,10 +744,8 @@ combined_plot2 <- ggarrange(p3, p5, p8, p10,
                             font.label = list(size = 16, face = "bold"))
 
 # Save combined plots
-ggsave("LASSO_GoldStandard_Performance.pdf", combined_plot1, 
-       width = 14, height = 12, dpi = 300)
-ggsave("LASSO_GoldStandard_Features.pdf", combined_plot2,
-       width = 14, height = 12, dpi = 300)
+ggsave("LASSO_Performance.pdf", combined_plot1, width = 14, height = 12, dpi = 300)
+ggsave("LASSO_Features.pdf", combined_plot2, width = 14, height = 12, dpi = 300)
 
 # Save individual plots
 ggsave("LASSO_ROC_Curve.png", p1, width = 7, height = 7, units = "in", dpi = 600)
@@ -827,18 +783,15 @@ cat("\nSaving results to CSV files...\n")
 write.csv(summary_df, "LASSO_Performance_PerFold.csv", row.names = FALSE)
 
 # 2. Summary statistics
-summary_stats <- data.frame(
-  Metric = names(mean_metrics),
-  Mean = mean_metrics,
-  SD = sd_metrics
-)
+summary_stats <- data.frame(Metric = names(mean_metrics), Mean = mean_metrics, 
+                            SD = sd_metrics)
 write.csv(summary_stats, "LASSO_Performance_Summary.csv", row.names = FALSE)
 
 # 3. Pooled performance
 pooled_performance <- data.frame(
   Metric = c("Pooled_AUC", "Pooled_AUC_CI_Lower", "Pooled_AUC_CI_Upper"),
-  Value = c(pooled_auc, ci_obj_lasso[1], ci_obj_lasso[3])
-)
+  Value = c(pooled_auc, ci_obj_lasso[1], ci_obj_lasso[3]))
+
 write.csv(pooled_performance, "LASSO_Pooled_Performance.csv", row.names = FALSE)
 
 # 4. Feature selection frequency/stability
@@ -852,10 +805,8 @@ if(length(consensus_genes) > 0) {
     filter(gene %in% consensus_genes) %>%
     select(gene, Freq, FreqPercent, mean_coef, sd_coef)
   
-  write.csv(consensus_df, 
-            sprintf("LASSO_Consensus_Features_%dpct.csv", 
-                    round(consensus_thresh * 100)),
-            row.names = FALSE)
+  write.csv(consensus_df, sprintf("LASSO_Consensus_Features_%dpct.csv", 
+                    round(consensus_thresh * 100)), row.names = FALSE)
 }
 
 # 6. Final model coefficients (lambda.min)
@@ -889,18 +840,12 @@ cat(strrep("=", 70) %+% "\n\n")
 cat("=== KEY RESULTS ===\n")
 cat(sprintf("  • Cross-Validation: %d-fold nested CV\n", K))
 cat(sprintf("  • Lambda selection: %s\n", use_lambda))
-cat(sprintf("  • Mean AUC: %.3f ± %.3f\n", 
-            mean_metrics["AUC"], sd_metrics["AUC"]))
-cat(sprintf("  • Pooled AUC: %.3f [%.3f, %.3f]\n", 
-            pooled_auc, ci_obj_lasso[1], ci_obj_lasso[3]))
-cat(sprintf("  • Mean Accuracy: %.3f ± %.3f\n", 
-            mean_metrics["Accuracy"], sd_metrics["Accuracy"]))
-cat(sprintf("  • Mean Sensitivity: %.3f ± %.3f\n", 
-            mean_metrics["Sensitivity"], sd_metrics["Sensitivity"]))
-cat(sprintf("  • Mean Specificity: %.3f ± %.3f\n", 
-            mean_metrics["Specificity"], sd_metrics["Specificity"]))
-cat(sprintf("  • Mean F1 Score: %.3f ± %.3f\n", 
-            mean_metrics["F1"], sd_metrics["F1"]))
+cat(sprintf("  • Mean AUC: %.3f ± %.3f\n", mean_metrics["AUC"], sd_metrics["AUC"]))
+cat(sprintf("  • Pooled AUC: %.3f [%.3f, %.3f]\n", pooled_auc, ci_obj_lasso[1], ci_obj_lasso[3]))
+cat(sprintf("  • Mean Accuracy: %.3f ± %.3f\n", mean_metrics["Accuracy"], sd_metrics["Accuracy"]))
+cat(sprintf("  • Mean Sensitivity: %.3f ± %.3f\n", mean_metrics["Sensitivity"], sd_metrics["Sensitivity"]))
+cat(sprintf("  • Mean Specificity: %.3f ± %.3f\n", mean_metrics["Specificity"], sd_metrics["Specificity"]))
+cat(sprintf("  • Mean F1 Score: %.3f ± %.3f\n", mean_metrics["F1"], sd_metrics["F1"]))
 
 cat("\n=== FEATURE SELECTION ===\n")
 cat(sprintf("  • Mean features selected: %.1f ± %.1f per fold\n", 
