@@ -1,7 +1,6 @@
 # ============================================================================
-# RANDOM FOREST CLASSIFICATION - GOLD STANDARD PROTOCOL
+# RANDOM FOREST CLASSIFICATION
 # Nested Cross-Validation with Hyperparameter Tuning
-# Publication-Quality Analysis and Visualization
 # ============================================================================
 
 # Required Libraries
@@ -113,13 +112,10 @@ for (i in seq_along(folds)) {
   
   # Configure inner CV
   trctrl <- trainControl(
-    method = "cv", 
-    number = inner_cv_folds, 
+    method = "cv", number = inner_cv_folds, 
     classProbs = TRUE, 
     summaryFunction = twoClassSummary,
-    savePredictions = "final", 
-    verboseIter = FALSE
-  )
+    savePredictions = "final", verboseIter = FALSE)
   
   # Define tuning grid
   tune_grid <- expand.grid(mtry = seq_len(ncol(x_train)))
@@ -130,15 +126,10 @@ for (i in seq_along(folds)) {
   # Hyperparameter tuning
   set.seed(123 + i)
   rf_tune <- train(
-    x = x_train, 
-    y = y_train_factor, 
-    method = "rf", 
-    metric = "ROC",
-    tuneGrid = tune_grid, 
-    trControl = trctrl,  
-    ntree = ntree, 
-    importance = TRUE
-  )
+    x = x_train, y = y_train_factor, 
+    method = "rf", metric = "ROC",
+    tuneGrid = tune_grid, trControl = trctrl,  
+    ntree = ntree, importance = TRUE)
   
   best_mtry <- rf_tune$bestTune$mtry
   best_mtry_vals[i] <- best_mtry
@@ -153,13 +144,9 @@ for (i in seq_along(folds)) {
   cat("│\n│ ➤ Training final model with optimal mtry...\n")
   
   rf_model <- randomForest(
-    x = x_train, 
-    y = y_train_factor,
-    ntree = ntree, 
-    mtry = best_mtry,
-    importance = TRUE, 
-    keep.forest = TRUE
-  )
+    x = x_train, y = y_train_factor,
+    ntree = ntree, mtry = best_mtry,
+    importance = TRUE, keep.forest = TRUE)
   
   # ──────────────────────────────────────────────────────────────────────────
   # EVALUATE ON TEST SET
@@ -195,10 +182,8 @@ for (i in seq_along(folds)) {
   npv_vals[i] <- cm$byClass["Neg Pred Value"]
   f1_vals[i] <- cm$byClass["F1"]
   
-  cat(sprintf("│   ✓ AUC: %.4f | Accuracy: %.4f\n", 
-              auc_vals[i], acc_vals[i]))
-  cat(sprintf("│   ✓ Sensitivity: %.4f | Specificity: %.4f\n", 
-              sens_vals[i], spec_vals[i]))
+  cat(sprintf("│   ✓ AUC: %.4f | Accuracy: %.4f\n",  auc_vals[i], acc_vals[i]))
+  cat(sprintf("│   ✓ Sensitivity: %.4f | Specificity: %.4f\n",  sens_vals[i], spec_vals[i]))
   
   # ──────────────────────────────────────────────────────────────────────────
   # FEATURE IMPORTANCE
@@ -238,10 +223,8 @@ for (i in seq_along(folds)) {
   par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
   
   # Panel 1: OOB error curve
-  matplot(err_matrix[, "OOB", drop = FALSE], type = "l", lwd = 2,
-          col = "#3498DB",
-          xlab = "Number of Trees", 
-          ylab = "OOB Error Rate", 
+  matplot(err_matrix[, "OOB", drop = FALSE], type = "l", lwd = 2, col = "#3498DB",
+          xlab = "Number of Trees", ylab = "OOB Error Rate", 
           main = sprintf("Fold %d: OOB Error Convergence", i))
   abline(h = final_oob_err, col = "#E74C3C", lty = 2, lwd = 2)
   abline(h = train_err, col = "#27AE60", lty = 3, lwd = 1.5)
@@ -249,9 +232,7 @@ for (i in seq_along(folds)) {
   legend("topright", 
          legend = c("OOB Error", "Final OOB", "Train Error", "Test Error"),
          col = c("#3498DB", "#E74C3C", "#27AE60", "#F39C12"), 
-         lty = c(1, 2, 3, 3), 
-         lwd = c(2, 2, 1.5, 1.5),
-         bty = "n")
+         lty = c(1, 2, 3, 3), lwd = c(2, 2, 1.5, 1.5), bty = "n")
   
   # Panel 2: Top feature importance
   topn <- min(10, nrow(imp_df))
@@ -259,19 +240,12 @@ for (i in seq_along(folds)) {
   
   barplot(
     t(as.matrix(tmp[, c("MeanDecreaseAccuracy", "MeanDecreaseGini")])),
-    beside = TRUE, 
-    las = 2, 
-    names.arg = tmp$gene,
+    beside = TRUE,  las = 2,  names.arg = tmp$gene,
     main = sprintf("Fold %d: Top %d Features", i, topn),
-    ylab = "Importance Score", 
-    col = c("#3498DB", "#E74C3C"),
-    cex.names = 0.7
-  )
-  legend("topright", 
-         legend = c("Mean Decrease Accuracy", "Mean Decrease Gini"), 
-         fill = c("#3498DB", "#E74C3C"), 
-         bty = "n")
-  
+    ylab = "Importance Score", col = c("#3498DB", "#E74C3C"),
+    cex.names = 0.7)
+  legend("topright", legend = c("Mean Decrease Accuracy", "Mean Decrease Gini"), 
+         fill = c("#3498DB", "#E74C3C"), bty = "n")
   dev.off()
   
   # ──────────────────────────────────────────────────────────────────────────
@@ -279,9 +253,7 @@ for (i in seq_along(folds)) {
   # ──────────────────────────────────────────────────────────────────────────
   
   saveRDS(rf_model, file = sprintf("RF_Model_Fold%02d.rds", i))
-  write.csv(imp_df, file = sprintf("RF_Importance_Fold%02d.csv", i), 
-            row.names = FALSE)
-  
+  write.csv(imp_df, file = sprintf("RF_Importance_Fold%02d.csv", i), row.names = FALSE)
   cat("└" %+% strrep("─", 68) %+% "┘\n\n")
 }
 
@@ -294,17 +266,11 @@ cat("AGGREGATED PERFORMANCE METRICS\n")
 cat(strrep("=", 70) %+% "\n\n")
 
 # Summary dataframe
-summary_df_rf <- data.frame(
-  Fold = 1:K,
-  Accuracy = acc_vals,
-  AUC = auc_vals,
-  Sensitivity = sens_vals,
-  Specificity = spec_vals,
-  PPV = ppv_vals,
-  NPV = npv_vals,
-  F1 = f1_vals,
-  Best_mtry = best_mtry_vals
-)
+summary_df_rf <- data.frame(Fold = 1:K,
+  Accuracy = acc_vals,AUC = auc_vals,
+  Sensitivity = sens_vals, Specificity = spec_vals,
+  PPV = ppv_vals, NPV = npv_vals,
+  F1 = f1_vals, Best_mtry = best_mtry_vals)
 
 # Calculate means and SDs
 mean_metrics <- colMeans(summary_df_rf[, -1], na.rm = TRUE)
@@ -365,8 +331,7 @@ imp_summary <- all_imp %>%
     mean_Gini = mean(MeanDecreaseGini, na.rm = TRUE),
     sd_Gini = sd(MeanDecreaseGini, na.rm = TRUE),
     selection_frequency = n() / K * 100,  # % of folds where feature appeared
-    .groups = "drop"
-  ) %>%
+    .groups = "drop") %>%
   arrange(desc(mean_MDA))
 
 cat("Top 10 Features (by Mean Decrease Accuracy):\n")
@@ -417,22 +382,16 @@ roc_df <- data.frame(
 p1 <- ggplot(roc_df, aes(x = FPR, y = TPR)) +
   geom_line(color = "#3498DB", size = 1.3) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50", size = 0.8) +
-  annotate("text", x = 0.6, y = 0.3, 
-           label = sprintf("Pooled AUC = %.3f", pooled_auc),
+  annotate("text", x = 0.6, y = 0.3, label = sprintf("Pooled AUC = %.3f", pooled_auc),
            size = 5, fontface = "bold", color = "#2C3E50") +
-  annotate("text", x = 0.6, y = 0.2,
-           label = sprintf("95%% CI: [%.3f, %.3f]", ci_obj_rf[1], ci_obj_rf[3]),
-           size = 4, color = "#7F8C8D") +
-  annotate("text", x = 0.6, y = 0.1,
-           label = sprintf("Mean CV AUC: %.3f ± %.3f", 
-                           mean_metrics["AUC"], sd_metrics["AUC"]),
-           size = 4, color = "#7F8C8D") +
-  labs(
-    title = "Random Forest ROC Curve",
+  annotate("text", x = 0.6, y = 0.2, label = sprintf("95%% CI: [%.3f, %.3f]", 
+           ci_obj_rf[1], ci_obj_rf[3]), size = 4, color = "#7F8C8D") +
+  annotate("text", x = 0.6, y = 0.1, label = sprintf("Mean CV AUC: %.3f ± %.3f", 
+           mean_metrics["AUC"], sd_metrics["AUC"]), size = 4, color = "#7F8C8D") +
+  labs(title = "Random Forest ROC Curve",
     subtitle = sprintf("%d-Fold Cross-Validation (Pooled Predictions)", K),
     x = "False Positive Rate (1 - Specificity)",
-    y = "True Positive Rate (Sensitivity)"
-  ) +
+    y = "True Positive Rate (Sensitivity)") +
   coord_equal() +
   theme_publication
 
@@ -453,9 +412,7 @@ p2 <- ggplot(perf_long, aes(x = Metric, y = Value, fill = Metric)) +
   labs(
     title = "Performance Metrics Across CV Folds",
     subtitle = "Diamond = Mean, Box = IQR, Points = Individual Folds",
-    x = "Performance Metric",
-    y = "Value"
-  ) +
+    x = "Performance Metric", y = "Value") +
   theme_publication +
   theme(legend.position = "none") +
   ylim(0, 1)
@@ -474,13 +431,10 @@ p3 <- ggplot(top_features_mda, aes(x = gene, y = mean_MDA, fill = mean_MDA)) +
                 width = 0.3, size = 0.5) +
   scale_fill_gradient(low = "#F39C12", high = "#C0392B") +
   coord_flip() +
-  labs(
-    title = "Feature Importance: Mean Decrease Accuracy",
+  labs( title = "Feature Importance: Mean Decrease Accuracy",
     subtitle = sprintf("Top 15 Features (Aggregated from %d-Fold CV)", K),
-    x = "Gene",
-    y = "Mean Decrease in Accuracy",
-    fill = "Importance"
-  ) +
+    x = "Gene", y = "Mean Decrease in Accuracy",
+    fill = "Importance") +
   theme_publication +
   theme(legend.position = "right")
 
@@ -499,13 +453,10 @@ p4 <- ggplot(top_features_gini, aes(x = gene, y = mean_Gini, fill = mean_Gini)) 
                 width = 0.3, size = 0.5) +
   scale_fill_gradient(low = "#3498DB", high = "#8E44AD") +
   coord_flip() +
-  labs(
-    title = "Feature Importance: Mean Decrease Gini",
+  labs(title = "Feature Importance: Mean Decrease Gini",
     subtitle = sprintf("Top 15 Features (Aggregated from %d-Fold CV)", K),
-    x = "Gene",
-    y = "Mean Decrease in Gini Impurity",
-    fill = "Importance"
-  ) +
+    x = "Gene", y = "Mean Decrease in Gini Impurity",
+    fill = "Importance" ) +
   theme_publication +
   theme(legend.position = "right")
 
@@ -529,12 +480,9 @@ p5 <- ggplot(cm_df, aes(x = Reference, y = Prediction, fill = Count)) +
   geom_text(aes(label = sprintf("%d\n(%.1f%%)", Count, Percentage)), 
             size = 6, fontface = "bold", color = "white") +
   scale_fill_gradient(low = "#3498DB", high = "#E74C3C") +
-  labs(
-    title = "Aggregated Confusion Matrix",
+  labs(title = "Aggregated Confusion Matrix",
     subtitle = sprintf("%d-Fold Cross-Validation", K),
-    x = "True Label",
-    y = "Predicted Label"
-  ) +
+    x = "True Label", y = "Predicted Label") +
   theme_publication +
   theme(
     legend.position = "right",
@@ -556,13 +504,10 @@ p6 <- ggplot(top_features_mda,
   scale_fill_gradient2(low = "#E74C3C", mid = "#F39C12", high = "#27AE60",
                        midpoint = 50) +
   coord_flip() +
-  labs(
-    title = "Feature Selection Stability",
+  labs(title = "Feature Selection Stability",
     subtitle = "Percentage of CV Folds Where Feature Was Selected",
-    x = "Gene",
-    y = "Selection Frequency (%)",
-    fill = "Frequency (%)"
-  ) +
+    x = "Gene", y = "Selection Frequency (%)",
+    fill = "Frequency (%)") +
   theme_publication +
   theme(legend.position = "right") +
   ylim(0, 105)
@@ -583,21 +528,17 @@ ann_colors <- list(
 )
 
 p7 <- pheatmap(
-  expr_top,
-  scale = "row",
+  expr_top, scale = "row",
   clustering_distance_rows = "euclidean",
   clustering_distance_cols = "euclidean",
   clustering_method = "complete",
   annotation_col = annotation_col,
   annotation_colors = ann_colors,
   color = colorRampPalette(c("#3498DB", "white", "#E74C3C"))(100),
-  fontsize = 10,
-  fontsize_row = 10,
-  fontsize_col = 7,
+  fontsize = 10, fontsize_row = 10, fontsize_col = 7,
   border_color = NA,
   main = "Expression Heatmap - Top 10 Important Features",
-  show_colnames = FALSE
-)
+  show_colnames = FALSE)
 
 # ──────────────────────────────────────────────────────────────────────────
 # Visualization 8: Hyperparameter Tuning Results
@@ -619,10 +560,8 @@ p8 <- ggplot(mtry_df, aes(x = Fold, y = Best_mtry, fill = AUC)) +
     title = "Optimal mtry per CV Fold",
     subtitle = sprintf("Mean mtry: %.1f ± %.1f", 
                        mean(best_mtry_vals), sd(best_mtry_vals)),
-    x = "CV Fold",
-    y = "Optimal mtry",
-    fill = "Test AUC"
-  ) +
+    x = "CV Fold", y = "Optimal mtry",
+    fill = "Test AUC") +
   theme_publication
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -641,12 +580,9 @@ p9 <- ggplot(expr_top3_long, aes(x = Gene, y = Expression, fill = Condition)) +
                      label = "p.signif", 
                      method = "t.test",
                      label.y.npc = 0.95) +
-  labs(
-    title = "Expression Levels - Top 3 Most Important Features",
+  labs(title = "Expression Levels - Top 3 Most Important Features",
     subtitle = "Statistical significance by t-test",
-    x = "Gene",
-    y = "Log2(RPKM + 1)"
-  ) +
+    x = "Gene", y = "Log2(RPKM + 1)") +
   theme_publication +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"))
 
@@ -661,8 +597,7 @@ perf_summary_df <- data.frame(
            mean_metrics["F1"]),
   SD = c(sd_metrics["AUC"], sd_metrics["Accuracy"],
          sd_metrics["Sensitivity"], sd_metrics["Specificity"],
-         sd_metrics["F1"])
-)
+         sd_metrics["F1"]))
 
 perf_summary_df$Metric <- factor(perf_summary_df$Metric,
                                  levels = perf_summary_df$Metric)
@@ -674,15 +609,11 @@ p10 <- ggplot(perf_summary_df, aes(x = Metric, y = Mean, fill = Metric)) +
   geom_text(aes(label = sprintf("%.3f", Mean)), 
             vjust = -0.5, fontface = "bold", size = 4) +
   scale_fill_brewer(palette = "Set3") +
-  labs(
-    title = "Random Forest Performance Summary",
+  labs(title = "Random Forest Performance Summary",
     subtitle = sprintf("%d-Fold Cross-Validation Results", K),
-    x = "Performance Metric",
-    y = "Value"
-  ) +
+    x = "Performance Metric", y = "Value") +
   theme_publication +
-  theme(legend.position = "none") +
-  ylim(0, 1.1)
+  theme(legend.position = "none") + ylim(0, 1.1)
 
 # ============================================================================
 # PART 7: SAVE ALL VISUALIZATIONS
@@ -738,16 +669,15 @@ write.csv(summary_df_rf, "RF_Performance_PerFold.csv", row.names = FALSE)
 summary_stats <- data.frame(
   Metric = c("Accuracy", "AUC", "Sensitivity", "Specificity", 
              "PPV", "NPV", "F1", "Best_mtry"),
-  Mean = mean_metrics,
-  SD = sd_metrics
-)
+  Mean = mean_metrics, SD = sd_metrics)
+
 write.csv(summary_stats, "RF_Performance_Summary.csv", row.names = FALSE)
 
 # 3. Pooled performance
 pooled_performance <- data.frame(
   Metric = c("Pooled_AUC", "Pooled_AUC_CI_Lower", "Pooled_AUC_CI_Upper"),
-  Value = c(pooled_auc, ci_obj_rf[1], ci_obj_rf[3])
-)
+  Value = c(pooled_auc, ci_obj_rf[1], ci_obj_rf[3]))
+
 write.csv(pooled_performance, "RF_Pooled_Performance.csv", row.names = FALSE)
 
 # 4. Feature importance summary
@@ -759,11 +689,9 @@ if(length(consensus_features) > 0) {
     filter(gene %in% consensus_features) %>%
     select(gene, mean_MDA, sd_MDA, mean_Gini, sd_Gini, selection_frequency)
   
-  write.csv(consensus_df, 
-            sprintf("RF_Consensus_Features_%dpct.csv", 
+  write.csv(consensus_df, sprintf("RF_Consensus_Features_%dpct.csv", 
                     round(consensus_thresh * 100)),
-            row.names = FALSE)
-}
+            row.names = FALSE)}
 
 # 6. Aggregated confusion matrix
 write.csv(cm_df, "RF_Confusion_Matrix_Aggregated.csv", row.names = FALSE)
@@ -780,18 +708,12 @@ cat(strrep("=", 70) %+% "\n\n")
 
 cat("=== KEY RESULTS ===\n")
 cat(sprintf("  • Cross-Validation: %d-fold nested CV\n", K))
-cat(sprintf("  • Mean AUC: %.3f ± %.3f\n", 
-            mean_metrics["AUC"], sd_metrics["AUC"]))
-cat(sprintf("  • Pooled AUC: %.3f [%.3f, %.3f]\n", 
-            pooled_auc, ci_obj_rf[1], ci_obj_rf[3]))
-cat(sprintf("  • Mean Accuracy: %.3f ± %.3f\n", 
-            mean_metrics["Accuracy"], sd_metrics["Accuracy"]))
-cat(sprintf("  • Mean Sensitivity: %.3f ± %.3f\n", 
-            mean_metrics["Sensitivity"], sd_metrics["Sensitivity"]))
-cat(sprintf("  • Mean Specificity: %.3f ± %.3f\n", 
-            mean_metrics["Specificity"], sd_metrics["Specificity"]))
-cat(sprintf("  • Mean F1 Score: %.3f ± %.3f\n", 
-            mean_metrics["F1"], sd_metrics["F1"]))
+cat(sprintf("  • Mean AUC: %.3f ± %.3f\n", mean_metrics["AUC"], sd_metrics["AUC"]))
+cat(sprintf("  • Pooled AUC: %.3f [%.3f, %.3f]\n", pooled_auc, ci_obj_rf[1], ci_obj_rf[3]))
+cat(sprintf("  • Mean Accuracy: %.3f ± %.3f\n",  mean_metrics["Accuracy"], sd_metrics["Accuracy"]))
+cat(sprintf("  • Mean Sensitivity: %.3f ± %.3f\n", mean_metrics["Sensitivity"], sd_metrics["Sensitivity"]))
+cat(sprintf("  • Mean Specificity: %.3f ± %.3f\n", mean_metrics["Specificity"], sd_metrics["Specificity"]))
+cat(sprintf("  • Mean F1 Score: %.3f ± %.3f\n", mean_metrics["F1"], sd_metrics["F1"]))
 
 cat("\n=== FEATURE SELECTION ===\n")
 cat(sprintf("  • Total features analyzed: %d\n", nrow(imp_summary)))
@@ -805,8 +727,8 @@ print(head(imp_summary[, c("gene", "mean_MDA", "sd_MDA", "selection_frequency")]
 
 cat("\n=== GENERATED FILES ===\n")
 cat("\nPDF Visualizations (12 files):\n")
-cat("  - RF_GoldStandard_Performance.pdf (4-panel: ROC, metrics, CM, summary)\n")
-cat("  - RF_GoldStandard_Features.pdf (4-panel: importance & stability)\n")
+cat("  - RF_Performance.pdf (4-panel: ROC, metrics, CM, summary)\n")
+cat("  - RF_Features.pdf (4-panel: importance & stability)\n")
 cat("  - RF_ROC_Curve.pdf\n")
 cat("  - RF_Performance_Distribution.pdf\n")
 cat("  - RF_Feature_Importance_MDA.pdf\n")
