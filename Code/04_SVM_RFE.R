@@ -166,7 +166,7 @@ svm_rfe_cv <- function(data, class_col = "condition", step_size = 1,
 }
 
 # ============================================================================
-# PART 3: NESTED CROSS-VALIDATION (Gold Standard for Unbiased Performance)
+# PART 3: NESTED CROSS-VALIDATION (For Unbiased Performance)
 # ============================================================================
 
 cat("\n" %+% strrep("=", 70) %+% "\n")
@@ -739,8 +739,8 @@ combined_plot2 <- ggarrange(p6, p7, p9, p10,
                             font.label = list(size = 16, face = "bold"))
 
 # Save all plots
-ggsave("SVM_RFE_GoldStandard_Main.png", combined_plot1, width = 14, height = 12, units = "in", dpi = 600)
-ggsave("SVM_RFE_GoldStandard_Metrics.png", combined_plot2, width = 14, height = 12, units = "in", dpi = 600)
+ggsave("SVM_RFE_Main.png", combined_plot1, width = 14, height = 12, units = "in", dpi = 600)
+ggsave("SVM_RFE_Metrics.png", combined_plot2, width = 14, height = 12, units = "in", dpi = 600)
 ggsave("SVM_RFE_Feature_Elimination.png", p1, width = 8, height = 6, units = "in", dpi = 600)
 ggsave("SVM_RFE_ROC_Curve.png", p2, width = 7, height = 7, units = "in", dpi = 600)
 ggsave("SVM_RFE_Confusion_Matrix.png", p3, width = 7, height = 6, units = "in", dpi = 600)
@@ -836,7 +836,7 @@ write.csv(rfe_curve_df, "SVM_RFE_Elimination_Curve.csv", row.names = FALSE)
 # ============================================================================
 
 cat("\n" %+% strrep("=", 70) %+% "\n")
-cat("GOLD STANDARD SVM-RFE ANALYSIS COMPLETE\n")
+cat("SVM-RFE ANALYSIS COMPLETE\n")
 cat(strrep("=", 70) %+% "\n")
 
 cat("\n=== KEY RESULTS (UNBIASED NESTED CV) ===\n")
@@ -862,8 +862,8 @@ print(head(stability_results$stability_ranking, 10))
 
 cat("\n=== GENERATED FILES ===\n")
 cat("\nPDF Visualizations (12 files):\n")
-cat("  - SVM_RFE_GoldStandard_Main.pdf (4-panel summary)\n")
-cat("  - SVM_RFE_GoldStandard_Metrics.pdf (4-panel metrics)\n")
+cat("  - SVM_RFE_Main.pdf (4-panel summary)\n")
+cat("  - SVM_RFE_Metrics.pdf (4-panel metrics)\n")
 cat("  - SVM_RFE_Feature_Elimination.pdf\n")
 cat("  - SVM_RFE_ROC_Curve_NestedCV.pdf\n")
 cat("  - SVM_RFE_Confusion_Matrix_NestedCV.pdf\n")
